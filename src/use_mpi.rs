@@ -2,7 +2,7 @@ use mpi_sys::*;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 
-fn use_mpi() {
+pub fn use_mpi() {
     unsafe {
         MPI_Init(std::ptr::null_mut(), std::ptr::null_mut());
     }

@@ -1,11 +1,11 @@
 use std::thread;
 use std::time::Duration;
 
-//! Hello World server in Rust
-//! Binds REP socket to tcp://*:5555
-//! Expects "Hello" from client, replies with "World"
+// Hello World server in Rust
+// Binds REP socket to tcp://*:5555
+// Expects "Hello" from client, replies with "World"
 
-fn use_zeromq_responder() {
+pub fn use_zeromq_responder() {
     let context = zmq::Context::new();
     let responder = context.socket(zmq::REP).unwrap();
 
@@ -20,7 +20,7 @@ fn use_zeromq_responder() {
     }
 }
 
-fn use_zeromq_requester() {
+pub fn use_zeromq_requester() {
     println!("Connecting to hello world server...");
 
     let context = zmq::Context::new();
