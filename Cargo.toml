@@ -8,3 +8,4 @@ edition = "2021"
 
 [dependencies]
 mpi-sys = "0.2.1"
+zmq = "0.10.0"
