@@ -1,0 +1,25 @@
+==== Local Test ====
+sender: 0, receiver: 1, latency: 0.0073939999999999995
+sender: 0, receiver: 1, latency: 0.001062
+sender: 0, receiver: 1, latency: 0.001042
+sender: 0, receiver: 1, latency: 0.002205
+sender: 0, receiver: 1, latency: 0.001343
+
+sender: 1, receiver: 0, latency: 0.001874
+sender: 1, receiver: 0, latency: 0.001282
+sender: 1, receiver: 0, latency: 0.0013230000000000002
+sender: 1, receiver: 0, latency: 0.000901
+sender: 1, receiver: 0, latency: 0.005180000000000001
+
+==== DAS 6 Test ====
+sender: 1, receiver: 0, latency: 0.015007999999999999
+sender: 1, receiver: 0, latency: 0.005971
+sender: 1, receiver: 0, latency: 0.006011
+sender: 1, receiver: 0, latency: 0.006412
+sender: 1, receiver: 0, latency: 0.0060209999999999994
+
+sender: 0, receiver: 1, latency: 0.6520309999999999
+sender: 0, receiver: 1, latency: 0.006712
+sender: 0, receiver: 1, latency: 0.005911
+sender: 0, receiver: 1, latency: 0.006382
+sender: 0, receiver: 1, latency: 0.005991
