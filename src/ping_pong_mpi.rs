@@ -22,9 +22,15 @@ pub fn ping_pong() {
         unsafe { MPI_Abort(RSMPI_COMM_WORLD, 1); }
     }
 
+    let sender_rank = 0;
+    let receiver_rank = 1;
+
     // Start of the main body
-    let mut master_buf= [0; 5].as_mut_ptr();
-    let mut my_buf = [0; 5].as_mut_ptr();
+    let mut master_vec = [0; 5];
+    let mut master_buf= master_vec.as_mut_ptr();
+
+    let mut my_vec = [0; 5];
+    let mut my_buf = my_vec.as_mut_ptr();
     // Create a window, not allocate
     // create is you already have an allocated buffer
     // allocate is you haven't, MPI allocate it for you
@@ -32,7 +38,7 @@ pub fn ping_pong() {
     // Displacement unit: simplify access with a single datatype
     // typical use: either 1 (all access are in terms of byte offset) or sizeof(type)
     let mut window = ptr::null_mut();
-    if rank == 0 {
+    if rank == sender_rank {
         unsafe { MPI_Win_create(master_buf as *mut c_void, (5 * size_of::<c_int>()) as MPI_Aint,
                                 size_of::<c_int>() as c_int, RSMPI_INFO_NULL, RSMPI_COMM_WORLD, &mut window);
         }
@@ -42,32 +48,53 @@ pub fn ping_pong() {
         }
     }
 
-    if rank == 0 {
+    if rank == sender_rank {
         for i in 0..5 {
             unsafe { *master_buf.add(i) = 114514 as c_int };
         }
     }
-
-    let sender_rank = 0;
-    let receiver_rank = 1;
 
     // Start of a epoch with fence
     unsafe { MPI_Win_fence(0, window); }
 
     if rank == receiver_rank {
         unsafe { MPI_Get(my_buf as *mut c_void, 5, RSMPI_INT32_T,
-                         0, 0, 5, RSMPI_INT32_T, window); }
+                         sender_rank, 0, 5, RSMPI_INT32_T, window); }
     }
 
     unsafe { MPI_Win_fence(0, window); }
 
-    if rank == 1 {
+    if rank == receiver_rank {
+        println!("==== Receiver have received ====");
         for i in 0..5 {
             unsafe {
-                let val = *(my_buf.wrapping_add(i));
+                // let val = *(my_buf.wrapping_add(i));
+                // my_vec[i] += i as c_int;
+                println!("{}", my_vec[i]);
+            }
+        }
+        println!("==== Receiver done ====")
+    }
+
+    if rank == receiver_rank {
+        for i in 0..5 {
+            my_vec[i] += i as c_int;
+        }
+        unsafe { MPI_Put(my_buf as *mut c_void, 5, RSMPI_INT32_T,
+                         sender_rank, 0, 5, RSMPI_INT32_T, window); }
+    }
+
+    unsafe { MPI_Win_fence(0, window); }
+
+    if rank == sender_rank {
+        println!("=== Sender have received ===");
+        for i in 0..5 {
+            unsafe {
+                let val = *(master_buf.wrapping_add(i));
                 println!("{}", val);
             }
         }
+        println!("=== Sender done printing ===");
     }
 
     // Clean up and finish
