@@ -48,54 +48,62 @@ pub fn ping_pong() {
         }
     }
 
-    if rank == sender_rank {
-        for i in 0..5 {
-            unsafe { *master_buf.add(i) = 114514 as c_int };
-        }
-    }
+    // **********************
+    // * Start of ping pong *
+    // **********************
 
-    // Start of a epoch with fence
-    unsafe { MPI_Win_fence(0, window); }
+    for round in 0..5 {
 
-    if rank == receiver_rank {
-        unsafe { MPI_Get(my_buf as *mut c_void, 5, RSMPI_INT32_T,
-                         sender_rank, 0, 5, RSMPI_INT32_T, window); }
-    }
-
-    unsafe { MPI_Win_fence(0, window); }
-
-    if rank == receiver_rank {
-        println!("==== Receiver have received ====");
-        for i in 0..5 {
-            unsafe {
-                // let val = *(my_buf.wrapping_add(i));
-                // my_vec[i] += i as c_int;
-                println!("{}", my_vec[i]);
+        if rank == sender_rank {
+            for i in 0..5 {
+                master_vec[i] += 1;
             }
         }
-        println!("==== Receiver done ====")
-    }
 
-    if rank == receiver_rank {
-        for i in 0..5 {
-            my_vec[i] += i as c_int;
+        // Start of a epoch with fence
+        unsafe { MPI_Win_fence(0, window); }
+
+        if rank == receiver_rank {
+            unsafe { MPI_Get(my_buf as *mut c_void, 5, RSMPI_INT32_T,
+                             sender_rank, 0, 5, RSMPI_INT32_T, window); }
         }
-        unsafe { MPI_Put(my_buf as *mut c_void, 5, RSMPI_INT32_T,
-                         sender_rank, 0, 5, RSMPI_INT32_T, window); }
-    }
 
-    unsafe { MPI_Win_fence(0, window); }
+        unsafe { MPI_Win_fence(0, window); }
 
-    if rank == sender_rank {
-        println!("=== Sender have received ===");
-        for i in 0..5 {
-            unsafe {
-                let val = *(master_buf.wrapping_add(i));
-                println!("{}", val);
+        if rank == receiver_rank {
+            println!("==== Receiver have received at round: {} ====", round);
+            for i in 0..5 {
+                unsafe {
+                    // let val = *(my_buf.wrapping_add(i));
+                    // my_vec[i] += i as c_int;
+                    println!("{}", my_vec[i]);
+                }
             }
+            println!("==== Receiver done at round: {} ====", round)
         }
-        println!("=== Sender done printing ===");
+
+        if rank == receiver_rank {
+            for i in 0..5 {
+                my_vec[i] += 1;
+            }
+            unsafe { MPI_Put(my_buf as *mut c_void, 5, RSMPI_INT32_T,
+                             sender_rank, 0, 5, RSMPI_INT32_T, window); }
+        }
+
+        unsafe { MPI_Win_fence(0, window); }
+
+        if rank == sender_rank {
+            println!("=== Sender have received back from receiver at round: {} ===", round);
+            for i in 0..5 {
+                unsafe {
+                    // let val = *(master_buf.wrapping_add(i));
+                    println!("{}", master_vec[i]);
+                }
+            }
+            println!("=== Sender done printing at round {} ===", round);
+        }
     }
+
 
     // Clean up and finish
     unsafe {
