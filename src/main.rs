@@ -1,7 +1,8 @@
 mod use_mpi;
 mod use_zeromq;
 mod ping_pong_mpi;
+mod sor_seq;
 
 fn main() {
-    ping_pong_mpi::ping_pong();
+    sor_seq::sor();
 }
