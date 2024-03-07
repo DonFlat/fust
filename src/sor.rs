@@ -4,24 +4,19 @@ use mpi::traits::*;
 
 fn stencil(matrix: &Vec<Option<Vec<f64>>>, row: usize, col: usize) -> f64 {
     // 0.0 is magic number.
-    let up = match &matrix[row - 1] {
-        Some(current_row) => current_row[col],
-        None => panic!("No value in row {}", row - 1)
-    };
-    let down = match &matrix[row + 1] {
-        Some(current_row) => current_row[col],
-        None => panic!("No value in row {}", row + 1)
-    };
-    let left = match &matrix[row] {
-        Some(current_row) => current_row[col - 1],
-        None => panic!("No value in row {}", row + 1)
-    };
-    let right = match &matrix[row] {
-        Some(current_row) => current_row[col + 1],
-        None => panic!("No value in row {}", row + 1)
-    };
+    let four_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
-    (up + down + left + right) / 4.0
+    let values = four_directions.iter().map(|&(r_off, c_off)| {
+        let new_row = row + r_off; // Calculating new row index
+        let new_col = col + c_off; // Calculating new column index
+
+        matrix[new_row]  // Safely getting the row
+            .and_then(|r| *r.as_ref()) // Handling Option
+            .and_then(|current_row| current_row[new_col]) // Safely getting the column
+            .and_then(|&cell| Some(cell)) // Extracting value
+            .unwrap_or_else(|| panic!("No value at position ({}, {})", new_row, new_col)) // Handling missing value
+    });
+    values.sum::<f64>() / 4.0
 }
 
 fn even_1_odd_0(num: usize) -> usize {
@@ -31,21 +26,24 @@ fn even_1_odd_0(num: usize) -> usize {
     }
 }
 
+// Suppose n = 1000, size = 4, rank = 2
 fn get_bounds(n: usize, size: usize, rank: usize) -> (usize, usize) {
-    let mut nlarge = n % size;
-    let mut nsmall = size - nlarge;
+    let mut nlarge = n % size; // 1000 % 4 = 0
+    let mut nsmall = size - nlarge; // 4 - 0 = 4
 
-    let mut size_small = n / size;
-    let  size_large = size_small + 1;
+    let mut size_small = n / size; // 1000 / 4 = 25
+    let  size_large = size_small + 1; // 25 + 1 = 26
 
     let mut lower_bound;
     let mut upper_bound;
 
-    if rank < nlarge {
+    if rank < nlarge { // 2 < 0 ?
         lower_bound = rank * size_large;
         upper_bound = lower_bound + size_large;
     } else {
+        // 0 * 26 + (2 - 0) * 4 = 8
         lower_bound = nlarge * size_large + (rank - nlarge) * size_small;
+        // 8 + 25 = 33
         upper_bound = lower_bound + size_small;
     }
     (lower_bound, upper_bound)
