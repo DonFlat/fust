@@ -111,3 +111,5 @@ pub fn ping_pong() {
         MPI_Finalize();
     }
 }
+
+// TODO: what about 2D array, see that in sor
