@@ -4,18 +4,19 @@ use mpi::traits::*;
 
 fn stencil(matrix: &Vec<Option<Vec<f64>>>, row: usize, col: usize) -> f64 {
     // 0.0 is magic number.
-    let four_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]; // Up, Down, Left, Right
 
-    let values = four_directions.iter().map(|&(r_off, c_off)| {
-        let new_row = row + r_off; // Calculating new row index
-        let new_col = col + c_off; // Calculating new column index
+    let values = offsets.iter().map(|&(r_off, c_off)| {
+        let new_row = row as isize + r_off; // Calculating new row index
+        let new_col = col as isize + c_off; // Calculating new column index
 
-        matrix[new_row]  // Safely getting the row
-            .and_then(|r| *r.as_ref()) // Handling Option
-            .and_then(|current_row| current_row[new_col]) // Safely getting the column
+        matrix.get(new_row as usize)  // Safely getting the row
+            .and_then(|r| r.as_ref()) // Handling Option
+            .and_then(|current_row| current_row.get(new_col as usize)) // Safely getting the column
             .and_then(|&cell| Some(cell)) // Extracting value
             .unwrap_or_else(|| panic!("No value at position ({}, {})", new_row, new_col)) // Handling missing value
     });
+
     values.sum::<f64>() / 4.0
 }
 
