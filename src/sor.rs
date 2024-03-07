@@ -52,10 +52,6 @@ fn get_bounds(n: usize, size: usize, rank: usize) -> (usize, usize) {
 }
 
 pub fn sor() {
-    // TODO: obtain problem size from command line
-    // TODO: initialize MPI related variables
-
-    // TODO: Init MPI
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let size = world.size();
@@ -66,9 +62,9 @@ pub fn sor() {
 
     // initialize the basic variables
     let mut N = 1000;
-    if N < size as usize {
-        N = size as usize;
-    }
+    // if N < size as usize {
+    //     N = size as usize;
+    // }
     if rank == 0 {
         println!("Running SOR on {} nodes with {} rows", size, N);
     }
@@ -98,7 +94,7 @@ pub fn sor() {
         matrix.push(None);
     }
     // [lb-1, ub] are some
-    for _ in lb-1..ub+1 {
+    for _ in lb-1..=ub {
         matrix.push(Some(vec![0.0; n_col]));
     }
     // (ub + 1, n_row) are none
@@ -106,7 +102,7 @@ pub fn sor() {
         matrix.push(None);
     }
     // Initialize the boundary value
-    for i in lb-1..ub+1 {
+    for i in lb-1..=ub {
         for j in 0..n_col {
             if let Some(current_row) = &mut matrix[i] {
                 current_row[j] = if i == 0 {
@@ -143,7 +139,7 @@ pub fn sor() {
 
         max_diff = 0.0;
         for phase in 0..2 {
-            for i in lb..ub+1 {
+            for i in lb..ub {
                 let start_col = 1 + (even_1_odd_0(i) ^ phase);
                 for j in (start_col..n_col-1).step_by(2) {
                     let stencil_val = stencil(&matrix, i, j);
