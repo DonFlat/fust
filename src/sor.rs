@@ -2,22 +2,14 @@ use std::f64::consts::PI;
 use mpi::collective::SystemOperation;
 use mpi::traits::*;
 
-fn stencil(matrix: &Vec<Option<Vec<f64>>>, row: usize, col: usize) -> f64 {
-    // 0.0 is magic number.
-    let offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]; // Up, Down, Left, Right
-
-    let values = offsets.iter().map(|&(r_off, c_off)| {
-        let new_row = row as isize + r_off; // Calculating new row index
-        let new_col = col as isize + c_off; // Calculating new column index
-
-        matrix.get(new_row as usize)  // Safely getting the row
-            .and_then(|r| r.as_ref()) // Handling Option
-            .and_then(|current_row| current_row.get(new_col as usize)) // Safely getting the column
-            .and_then(|&cell| Some(cell)) // Extracting value
-            .unwrap_or_else(|| panic!("No value at position ({}, {})", new_row, new_col)) // Handling missing value
+fn stencil(matrix: &Vec<Vec<f64>>, row: usize, col: usize) -> f64 {
+    let direction = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let sum = direction.iter().fold(0.0, |acc, (r_off, c_off)| {
+        let r = (row as isize + r_off) as usize;
+        let c = (col as isize + c_off) as usize;
+        acc + matrix[r][c]
     });
-
-    values.sum::<f64>() / 4.0
+    sum / 4.0
 }
 
 fn even_1_odd_0(num: usize) -> usize {
@@ -61,9 +53,6 @@ pub fn sor() {
 
     // initialize the basic variables
     let mut N = 1000;
-    // if N < size as usize {
-    //     N = size as usize;
-    // }
     if rank == 0 {
         println!("Running SOR on {} nodes with {} rows", size, N);
     }
@@ -79,42 +68,27 @@ pub fn sor() {
     omega *= 0.8;
 
     // get my stripe bounds and malloc the grid accordingly
-    let (lower_bound, upper_bound) = get_bounds(N - 1, size as usize, rank as usize);
-    let mut lb = lower_bound;
-    let mut ub = upper_bound;
+    let (mut global_lb, mut global_ub) = get_bounds(N - 1, size as usize, rank as usize);
     // row 0 is static
-    if lb == 0 {
-        lb = 1;
+    if global_lb == 0 {
+        global_lb = 1;
     }
     // Initialize the matrix at local rank, full size, 0 filled
-    let mut matrix: Vec<Option<Vec<f64>>> = Vec::with_capacity(n_row);
-    // [0, lb-1) are none
-    for _ in 0..lb-1 {
-        matrix.push(None);
-    }
-    // [lb-1, ub] are some
-    for _ in lb-1..=ub {
-        matrix.push(Some(vec![0.0; n_col]));
-    }
-    // (ub + 1, n_row) are none
-    for _ in ub+1..n_row {
-        matrix.push(None);
-    }
+    let local_ub = global_ub - (global_lb - 1) + 1;
+    let mut matrix = vec![vec![0.0; n_col]; local_ub];
     // Initialize the boundary value
-    for i in lb-1..=ub {
+    for i in 0..=local_ub {
         for j in 0..n_col {
-            if let Some(current_row) = &mut matrix[i] {
-                current_row[j] = if i == 0 {
-                    4.56
-                } else if i == n_row - 1 {
-                    9.85
-                } else if j == 0 {
-                    7.32
-                } else if j == n_col - 1 {
-                    6.88
-                } else {
-                    0.0
-                }
+            matrix[i][j] = if i == 0 {
+                4.56
+            } else if i == n_row - 1 {
+                9.85
+            } else if j == 0 {
+                7.32
+            } else if j == n_col - 1 {
+                6.88
+            } else {
+                0.0
             }
         }
     }
@@ -123,32 +97,25 @@ pub fn sor() {
     // Now do the real computation
     let mut iteration = 0;
     loop {
-        if let Some(row_lb) = &matrix[lb] {
-            world.process_at_rank(pred_rank).send_with_tag(row_lb, 42);
-        }
-        if let Some(row_ub_1) = &matrix[ub-1] {
-            world.process_at_rank(succ_rank).send_with_tag(row_ub_1, 42);
-        }
-        if let Some(row_lb_1) = &mut matrix[lb - 1] {
-            world.process_at_rank(pred_rank).receive_into_with_tag(row_lb_1, 42);
-        }
-        if let Some(row_ub) = &mut matrix[ub] {
-            world.process_at_rank(succ_rank).receive_into_with_tag(row_ub, 42);
-        }
-
+        // TODO: [lb-1, ub] was initialized
+        // TODO: send row 1 to pred rank; send second last row to succ
+        // TODO: receive into row 0; receive into last row
+        world.process_at_rank(pred_rank).send_with_tag(&matrix[1], 42);
+        world.process_at_rank(succ_rank).send_with_tag(&matrix[local_ub -1], 42);
+        world.process_at_rank(pred_rank).receive_into_with_tag(&mut matrix[0], 42);
+        world.process_at_rank(succ_rank).receive_into_with_tag(&mut matrix[local_ub], 42);
         max_diff = 0.0;
         for phase in 0..2 {
-            for i in lb..ub {
+            // TODO: row [second row, last row)
+            for i in 1..local_ub {
                 let start_col = 1 + (even_1_odd_0(i) ^ phase);
                 for j in (start_col..n_col-1).step_by(2) {
                     let stencil_val = stencil(&matrix, i, j);
-                    if let Some(current_row) = &mut matrix[i] {
-                        diff = (stencil_val - current_row[j]).abs();
-                        if diff > max_diff {
-                            max_diff = diff;
-                        }
-                        current_row[j] = current_row[j] + omega * (stencil_val - current_row[j]);
+                    diff = (stencil_val - matrix[i][j]).abs();
+                    if diff > max_diff {
+                        max_diff = diff;
                     }
+                    matrix[i][j] = matrix[i][j] + omega * (stencil_val - matrix[i][j]);
                 }
             }
         }
@@ -167,3 +134,8 @@ pub fn sor() {
         println!("using {} iterations, diff is {} (allowed diff {})", iteration,max_diff,stop_diff)
     }
 }
+
+// try from 10x10, check matrix if identical
+// iterations should be same
+// only use boundary rows
+// check out if optimization options

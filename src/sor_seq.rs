@@ -1,5 +1,6 @@
-use std::env;
+use std::{env, time};
 use std::f64::consts::PI;
+use std::time::Instant;
 
 fn stencil(matrix: &Vec<Vec<f64>>, row: usize, col: usize) -> f64 {
     (matrix[row - 1][col] + matrix[row + 1][col] + matrix[row][col - 1] + matrix[row][col + 1]) / 4.0
@@ -39,6 +40,8 @@ pub fn sor() {
     omega *= 0.8;
 
     // Initialize the matrix
+    let mut mat = vec![vec![0.0; n_col]; n_row];
+    let mut m = [[0.0; 1000]; 1000];
     let mut matrix: Vec<Vec<f64>> = Vec::with_capacity(n_row);
     for _ in 0..n_row {
         matrix.push(vec![0.0; n_col]);
@@ -60,7 +63,8 @@ pub fn sor() {
     }
 
     // Now do the real computation
-    let mut iteration = 0;
+    let start = Instant::now();
+    let mut iteration: i32 = 0;
     loop {
         max_diff = 0.0;
         for phase in 0..2 {
@@ -81,6 +85,8 @@ pub fn sor() {
             break;
         }
     }
+    let end = Instant::now();
+    println!("It takes {:?}", end - start);
 
     // Print results
     println!("SOR {} x {} complete", N - 2, N - 2);
