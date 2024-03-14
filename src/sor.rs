@@ -74,9 +74,10 @@ pub fn sor() {
         global_lb = 1;
     }
     // Initialize the matrix at local rank, full size, 0 filled
-    let local_ub = global_ub - (global_lb - 1) + 1;
-    let mut matrix = vec![vec![0.0; n_col]; local_ub];
+    let local_ub = global_ub - (global_lb - 1);
+    let mut matrix = vec![vec![0.0; n_col]; local_ub+1];
     // Initialize the boundary value
+    // <= ub-(lb-1)
     for i in 0..=local_ub {
         for j in 0..n_col {
             matrix[i][j] = if i == 0 {
