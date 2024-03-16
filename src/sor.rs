@@ -1,16 +1,9 @@
+use std::env;
 use std::f64::consts::PI;
 use mpi::collective::SystemOperation;
+use mpi::Rank;
 use mpi::traits::*;
-
-fn stencil(matrix: &Vec<Vec<f64>>, row: usize, col: usize) -> f64 {
-    let direction = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-    let sum = direction.iter().fold(0.0, |acc, (r_off, c_off)| {
-        let r = (row as isize + r_off) as usize;
-        let c = (col as isize + c_off) as usize;
-        acc + matrix[r][c]
-    });
-    sum / 4.0
-}
+use mpi_sys::{MPI_PROC_NULL, RSMPI_PROC_NULL};
 
 fn even_1_odd_0(num: usize) -> usize {
     match num % 2 {
@@ -48,11 +41,24 @@ pub fn sor() {
     let size = world.size();
     let rank = world.rank();
 
-    let pred_rank = if rank == 0 { 0 } else { rank - 1 };
+    let pred_rank = if rank == 0 { rank } else { rank - 1 };
     let succ_rank = if rank == size - 1 { rank } else { rank + 1 };
 
+    // println!("I'm rank {}, my pred rank: {}, succ rank: {}", rank, pred_rank, succ_rank);
+    let args: Vec<String> = env::args().collect();
     // initialize the basic variables
-    let mut N = 1000;
+    let mut N: usize  = 0;
+    if args.len() > 1 {
+        N = args[1].parse().expect("Failed to parse args[1] as usize");
+    }
+    if N == 0 {
+        N = 1000;
+    }
+    // Give each process at least one row
+    if N < size as usize {
+        N = size as usize;
+    }
+
     if rank == 0 {
         println!("Running SOR on {} nodes with {} rows", size, N);
     }
@@ -63,6 +69,7 @@ pub fn sor() {
     let r = 0.5 * ((PI / n_col as f64).cos() + (PI / n_row as f64).cos());
     let mut  omega =  2.0 / (1.0 + (1.0 - r * r).sqrt());
     let stop_diff = 0.0002 / (2.0 - omega);
+    // println!("Stop diff: {}", stop_diff);
     let mut max_diff;
     let mut diff;
     omega *= 0.8;
@@ -80,46 +87,105 @@ pub fn sor() {
     // <= ub-(lb-1)
     for i in 0..=local_ub {
         for j in 0..n_col {
-            matrix[i][j] = if i == 0 {
-                4.56
-            } else if i == n_row - 1 {
-                9.85
+            if i == 0 && global_lb - 1 == 0 {
+                matrix[i][j] = 4.56;
+            } else if i == local_ub && global_ub == n_row - 1 {
+                matrix[i][j] = 9.85;
             } else if j == 0 {
-                7.32
+                matrix[i][j] = 7.32;
             } else if j == n_col - 1 {
-                6.88
+                matrix[i][j] = 6.88;
             } else {
-                0.0
+                matrix[i][j] = 0.0;
             }
         }
     }
-
+    // if rank == 1 {
+    //     println!("Rank: {}, global ub: {}, local ub: {}, cols: {}", rank, global_ub, local_ub, n_col);
+    //     print_matrix(&matrix, local_ub+1, n_col, rank);
+    // }
+    // println!("After initialization, matrix[0][0] is: {}", matrix[0][0]);
     let t_start = mpi::time();
     // Now do the real computation
     let mut iteration = 0;
     loop {
-        // TODO: [lb-1, ub] was initialized
-        // TODO: send row 1 to pred rank; send second last row to succ
-        // TODO: receive into row 0; receive into last row
-        world.process_at_rank(pred_rank).send_with_tag(&matrix[1], 42);
-        world.process_at_rank(succ_rank).send_with_tag(&matrix[local_ub -1], 42);
-        world.process_at_rank(pred_rank).receive_into_with_tag(&mut matrix[0], 42);
-        world.process_at_rank(succ_rank).receive_into_with_tag(&mut matrix[local_ub], 42);
+        if pred_rank != rank {
+            // if rank == 0 {
+            //     println!("====== rank {} --send to--> {}, {:?}", rank, pred_rank, &matrix[1]);
+            // }
+            world.process_at_rank(pred_rank).send_with_tag(&matrix[1], 42);
+            world.process_at_rank(pred_rank).receive_into_with_tag(&mut matrix[0], 42);
+            // if rank == 1 {
+            //     println!("***** rank {} <--receive from-- {}, {:?}", rank, pred_rank, &matrix[0]);
+            // }
+            // if rank == 1 {
+            //     println!("***** rank {} --send to--> {}, {:?}", rank, pred_rank, &matrix[1]);
+            //     println!("***** rank {} <--receive from-- {}, {:?}", rank, pred_rank, &matrix[0]);
+            // }
+        }
+        if succ_rank != rank {
+            world.process_at_rank(succ_rank).send_with_tag(&matrix[local_ub -1], 42);
+            world.process_at_rank(succ_rank).receive_into_with_tag(&mut matrix[local_ub], 42);
+            // if rank == 0 {
+            //     println!("====== rank {} --send to--> {}, {:?}", rank, succ_rank, &matrix[local_ub -1]);
+            //     println!("====== rank {} <--receive from-- {}, {:?}", rank, succ_rank, matrix[local_ub]);
+            // }
+        }
+
+        // if rank == 1 {
+        //     println!("After sending out, matrix is: ");
+        //     print_matrix(&matrix, local_ub+1, n_col, rank);
+        // }
+
         max_diff = 0.0;
         for phase in 0..2 {
-            // TODO: row [second row, last row)
+            let mut global_row_num = global_lb;
             for i in 1..local_ub {
-                let start_col = 1 + (even_1_odd_0(i) ^ phase);
+                let start_col = 1 + (even_1_odd_0(global_row_num) ^ phase);
                 for j in (start_col..n_col-1).step_by(2) {
-                    let stencil_val = stencil(&matrix, i, j);
-                    diff = (stencil_val - matrix[i][j]).abs();
+                    // The stencil operation
+                    let up = &matrix[i - 1][j];
+                    let down = &matrix[i + 1][j];
+                    let left = &matrix[i][j - 1];
+                    let right = &matrix[i][j + 1];
+
+                    // if rank == 0 {
+                    //     // print_matrix(&matrix, local_ub+1, n_col);
+                    //     println!("========= Before stencil, rank: {}, up: {}, down: {}, left: {}, right: {}", rank, up, down, left, right);
+                    // }
+
+                    // if rank == 1 {
+                    //     println!("******** Before stencil, rank: {}, up: {}, down: {}, left: {}, right: {}", rank, up, down, left, right);
+                    // }
+                    // if rank == 1 {
+                    //     println!("calc stencil on i:{}, j:{}", i, j);
+                    // }
+                    let stencil_val = (up + down + left + right) / 4.0;
+                    diff = (stencil_val as f64 - matrix[i][j] as f64).abs();
+
+                    // if rank == 0 {
+                    //     println!("========= After stencil, Rank: {}, i = {}, j = {}, diff = {}, max_diff = {}, stencil = {}", rank, i, j, diff, max_diff, stencil_val);
+                    // }
+
+                    // if rank == 1 {
+                    //     println!("********* After stencil, Rank: {}, i = {}, j = {}, diff = {}, max_diff = {}, stencil = {}", rank, i, j, diff, max_diff, stencil_val);
+                    // }
+
                     if diff > max_diff {
                         max_diff = diff;
                     }
                     matrix[i][j] = matrix[i][j] + omega * (stencil_val - matrix[i][j]);
                 }
+                global_row_num += 1;
             }
         }
+
+
+        // if rank == 1 {
+        //     println!("after iteration {}, matrix is: ", iteration);
+        //     print_matrix(&matrix, local_ub+1, n_col, rank);
+        // }
+
         diff = max_diff;
         world.all_reduce_into(&diff, &mut max_diff, SystemOperation::max());
         iteration += 1;
@@ -136,6 +202,16 @@ pub fn sor() {
     }
 }
 
+fn print_matrix(matrix: &Vec<Vec<f64>>, n_row: usize, n_col: usize, rank: Rank) {
+    println!("Rank {}'s matrix -----------", rank);
+    for i in 0..n_row {
+        print!("r[{}]: ", i);
+        for j in 0..n_col {
+            print!(" {} ", matrix[i][j]);
+        }
+        println!();
+    }
+}
 // try from 10x10, check matrix if identical
 // iterations should be same
 // only use boundary rows
