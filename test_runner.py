@@ -37,7 +37,7 @@ for problem_size in problem_sizes:
     csv_rows.append(current_row)
 
 # Write the results to a CSV file
-with open(f'mpi_rust_results_proc_{proc_number}.csv', 'w', newline='') as csvfile:
+with open(f'results_node_{proc_number}.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerows(csv_rows)
 

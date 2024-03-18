@@ -85,6 +85,6 @@ pub fn sor(problem_size: usize) {
     let elapsed = start.elapsed();
 
     // Print results
-    println!("SOR size: {} x {}, time: {} s", n_row-2, n_col-2, elapsed.as_secs_f64());
+    println!("SOR size: {} x {}, time: {} s", n_row-2, n_col-2, elapsed.as_millis());
     println!("Using {} iterations, diff is {} (allowed diff {})", iteration, max_diff, stop_diff);
 }

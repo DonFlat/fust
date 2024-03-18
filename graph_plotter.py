@@ -1,8 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+proc_num = 4
 # Load the data from the CSV file
-df = pd.read_csv("mpi_rust_results_with_plot.csv")
+df = pd.read_csv(f"results_node_{proc_num}.csv")
 
 # Ensure 'Problem Size' is the x-axis
 df.set_index("Problem Size", inplace=True)
@@ -16,9 +17,9 @@ for column in df.columns:
 
 plt.title('MPI Performance Comparison')
 plt.xlabel('Problem Size')
-plt.ylabel('Time (s)')
+plt.ylabel('Time (ms)')
 plt.legend()
 plt.grid(True)
 
 # Show the plot
-plt.savefig("filename.png")
+plt.savefig(f"results_node_{proc_num}.png")
