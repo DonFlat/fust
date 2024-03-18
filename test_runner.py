@@ -7,6 +7,7 @@ mpi_types = ["norm", "rma"]
 
 # Initialize a list to hold the rows of the CSV file
 csv_rows = []
+proc_number = 4
 
 # Add the header row
 header_row = ['Problem Size'] + mpi_types
@@ -16,7 +17,7 @@ csv_rows.append(header_row)
 for problem_size in problem_sizes:
     current_row = [problem_size]  # Start the row with the problem size
     for mpi_type in mpi_types:
-        command = f"mpirun ./target/debug/fust {problem_size} {mpi_type}"
+        command = f"mpirun -n {proc_number} ./target/debug/fust {problem_size} {mpi_type}"
         try:
             # Run the command
             print(f"Running {command}")
@@ -36,7 +37,7 @@ for problem_size in problem_sizes:
     csv_rows.append(current_row)
 
 # Write the results to a CSV file
-with open('mpi_rust_results.csv', 'w', newline='') as csvfile:
+with open(f'mpi_rust_results_proc_{proc_number}.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerows(csv_rows)
 
