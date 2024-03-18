@@ -38,7 +38,7 @@ fn get_bounds(n: usize, size: usize, rank: usize) -> (usize, usize) {
     (lower_bound, upper_bound)
 }
 
-pub fn sor() {
+pub fn sor(problem_size: usize) {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let size = world.size();
@@ -47,11 +47,7 @@ pub fn sor() {
     let pred_rank = if rank == 0 { 0 } else { rank - 1 };
     let succ_rank = if rank == size - 1 { rank } else { rank + 1 };
 
-    let args: Vec<String> = env::args().collect();
-    let mut N: usize  = 0;
-    if args.len() > 1 {
-        N = args[1].parse().expect("Failed to parse args[1] as usize");
-    }
+    let mut N: usize  = problem_size;
     if N == 0 {
         N = 1000;
     }
@@ -61,7 +57,7 @@ pub fn sor() {
     }
 
     if rank == 0 {
-        println!("Running RMA SOR on {} nodes with {} rows", size, N);
+        println!("Running SOR on nodes: {}, rows: {}", size, N);
     }
     N += 2;
 
@@ -210,7 +206,7 @@ pub fn sor() {
     let t_end = mpi::time();
 
     if rank == 0 {
-        println!("SOR {} x {} took {} s", n_row-2, n_col-2,t_end-t_start);
+        println!("SOR size: {} x {}, time: {} s", n_row-2, n_col-2,t_end-t_start);
         println!("using {} iterations, diff is {} (allowed diff {})", iteration,max_diff,stop_diff)
     }
 }

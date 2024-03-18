@@ -12,14 +12,11 @@ fn even_1_odd_0(num: usize) -> usize {
         _ => 0
     }
 }
-pub fn sor() {
-    // Collect command line argument
-    let args: Vec<String> = env::args().collect();
-
+pub fn sor(problem_size: usize) {
     // Problem size, default 1K (the matrix size)
-    let mut N = 1000;
-    if args.len() > 1 {
-        N = args[1].parse().unwrap();
+    let mut N: usize  = problem_size;
+    if N == 0 {
+        N = 1000;
     }
 
     println!("Running SOR with {} rows", N);
@@ -85,10 +82,9 @@ pub fn sor() {
             break;
         }
     }
-    let end = Instant::now();
-    println!("It takes {:?}", end - start);
+    let elapsed = start.elapsed();
 
     // Print results
-    println!("SOR {} x {} complete", N - 2, N - 2);
+    println!("SOR size: {} x {}, time: {} s", n_row-2, n_col-2, elapsed.as_secs_f64());
     println!("Using {} iterations, diff is {} (allowed diff {})", iteration, max_diff, stop_diff);
 }
