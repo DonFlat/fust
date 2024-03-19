@@ -198,7 +198,7 @@ pub fn sor(problem_size: usize) {
         world.all_reduce_into(&diff, &mut max_diff, SystemOperation::max());
         iteration += 1;
 
-        if iteration == 500 {
+        if iteration == 5000 {
             break;
         }
 
