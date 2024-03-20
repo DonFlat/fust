@@ -34,7 +34,7 @@ fn get_bounds(n: usize, size: usize, rank: usize) -> (usize, usize) {
     (lower_bound, upper_bound)
 }
 
-pub fn sor(problem_size: usize) {
+pub fn sor(problem_size: usize, iteration_limit: usize) {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let size = world.size();
@@ -136,7 +136,7 @@ pub fn sor(problem_size: usize) {
         world.all_reduce_into(&diff, &mut max_diff, SystemOperation::max());
         iteration += 1;
 
-        if iteration == 5000 {
+        if iteration == iteration_limit {
             break;
         }
     }
@@ -162,3 +162,5 @@ fn print_matrix(matrix: &Vec<Vec<f64>>, n_row: usize, n_col: usize, rank: Rank) 
 // iterations should be same
 // only use boundary rows
 // check out if optimization options
+
+// try ping-pong test send/recv vs Get/put

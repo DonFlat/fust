@@ -12,7 +12,7 @@ fn even_1_odd_0(num: usize) -> usize {
         _ => 0
     }
 }
-pub fn sor(problem_size: usize) {
+pub fn sor(problem_size: usize, iteration_limit: usize) {
     // Problem size, default 1K (the matrix size)
     let mut N: usize  = problem_size;
     if N == 0 {
@@ -85,6 +85,6 @@ pub fn sor(problem_size: usize) {
     let elapsed = start.elapsed();
 
     // Print results
-    println!("SOR size: {} x {}, time: {} s", n_row-2, n_col-2, elapsed.as_millis());
+    println!("SOR size: {} x {}, time: {} ms", n_row-2, n_col-2, elapsed.as_millis());
     println!("Using {} iterations, diff is {} (allowed diff {})", iteration, max_diff, stop_diff);
 }
