@@ -68,9 +68,9 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
             }
         }
 
-        unsafe {
-            MPI_Win_fence(0, window);
-        }
+        // unsafe {
+        //     MPI_Win_fence(0, window);
+        // }
 
         if rank == receiver_rank {
             het_vec.iter_mut().for_each(|x| *x += 1);
@@ -92,7 +92,7 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     }
     let t_end = mpi::time();
     if rank == initiator_rank {
-        //println!("--- round {} done, vec: {:?} ---", round, het_vec);
+        println!("--- vec: {:?} ---", het_vec);
         println!("Finished {} rounds of ping ping, time: {}", round_num, t_end - t_start);
     }
 
