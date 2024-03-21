@@ -46,7 +46,7 @@ for problem_size in problem_sizes:
         try:
             # Run the command
             print(f"Running {command}")
-            output = subprocess.check_output(command, shell=True, text=True)
+            output = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # Step 1: Split the string using the comma
             parts = output.split(',')
