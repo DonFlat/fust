@@ -2,7 +2,6 @@ use mpi_sys::*;
 use std::os::raw::{c_int, c_void};
 use std::ptr;
 use std::mem::size_of;
-use mpi::collective::SystemOperation;
 use mpi::topology::Communicator;
 
 pub fn ping_pong(vector_size: usize, round_num: usize) {
@@ -23,7 +22,7 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     let receiver_rank = 1;
 
     // Start of the main body
-    let mut het_vec = vec![1; vector_size];
+    let mut het_vec = vec![0; vector_size];
     // Create a window, not allocate
     // create is you already have an allocated buffer
     // allocate is you haven't, MPI allocate it for you
@@ -54,8 +53,9 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
         }
 
         if rank == receiver_rank {
+            //println!("Initiator rank {} starts ping", initiator_rank);
             unsafe {
-                MPI_Accumulate(
+                MPI_Get(
                     het_vec.as_mut_ptr() as *mut c_void,
                     vector_size as c_int,
                     RSMPI_INT32_T,
@@ -63,7 +63,22 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
                     0,
                     vector_size as c_int,
                     RSMPI_INT32_T,
-                    RSMPI_SUM,
+                    window
+                );
+            }
+        }
+
+        if rank == receiver_rank {
+            het_vec.iter_mut().for_each(|x| *x += 1);
+            unsafe {
+                MPI_Put(
+                    het_vec.as_mut_ptr() as *mut c_void,
+                    vector_size as c_int,
+                    RSMPI_INT32_T,
+                    initiator_rank,
+                    0,
+                    vector_size as c_int,
+                    RSMPI_INT32_T,
                     window
                 );
             }
@@ -73,7 +88,7 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     }
     let t_end = mpi::time();
     if rank == initiator_rank {
-        // println!("--- vec: {:?} ---", het_vec);
+        //println!("--- round {} done, vec: {:?} ---", round, het_vec);
         println!("Finished {} rounds of ping ping, time: {} ms", round_num, (t_end - t_start) * 1000f64);
     }
 
