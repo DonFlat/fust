@@ -33,6 +33,6 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     }
     let t_end = mpi::time();
     if rank == initiator_rank {
-        println!("Finished {} rounds of ping pong, time: {}", round_num, t_end - t_start);
+        println!("Finished {} rounds of ping pong, time: {} ms", round_num, (t_end - t_start) * 1000f64);
     }
 }

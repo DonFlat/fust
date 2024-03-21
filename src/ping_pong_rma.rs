@@ -74,7 +74,7 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     let t_end = mpi::time();
     if rank == initiator_rank {
         // println!("--- vec: {:?} ---", het_vec);
-        println!("Finished {} rounds of ping ping, time: {}", round_num, t_end - t_start);
+        println!("Finished {} rounds of ping ping, time: {} ms", round_num, (t_end - t_start) * 1000f64);
     }
 
     // should release window as it is not automatic
