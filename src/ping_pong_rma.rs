@@ -44,52 +44,58 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     // **********************
     // * Start of ping pong *
     // **********************
-    let t_start = mpi::time();
-    for round in 0..round_num {
-
-        // Start of a epoch with fence
-        unsafe {
-            MPI_Win_fence(0, window);
-        }
-
-        if rank == receiver_rank {
-            //println!("Initiator rank {} starts ping", initiator_rank);
+    let mut test_data = Vec::new();
+    // Grow size by 5
+    for message_size in (1..=vector_size).step_by(5) {
+        let t_start = mpi::time();
+        // each ping pong repeats 10 times
+        for _ in 0..10 {
             unsafe {
-                MPI_Get(
-                    het_vec.as_mut_ptr() as *mut c_void,
-                    vector_size as c_int,
-                    RSMPI_INT32_T,
-                    initiator_rank,
-                    0,
-                    vector_size as c_int,
-                    RSMPI_INT32_T,
-                    window
-                );
+                MPI_Win_fence(0, window);
+            }
+            if rank == receiver_rank {
+                unsafe {
+                    MPI_Get(
+                        het_vec.as_mut_ptr() as *mut c_void,
+                        message_size as c_int,
+                        RSMPI_INT32_T,
+                        initiator_rank,
+                        0,
+                        message_size as c_int,
+                        RSMPI_INT32_T,
+                        window
+                    );
+                }
+            }
+            unsafe {
+                MPI_Win_fence(0, window);
+            }
+            if rank == receiver_rank {
+                het_vec.iter_mut().for_each(|x| *x += 1);
+                unsafe {
+                    MPI_Put(
+                        het_vec.as_mut_ptr() as *mut c_void,
+                        message_size as c_int,
+                        RSMPI_INT32_T,
+                        initiator_rank,
+                        0,
+                        message_size as c_int,
+                        RSMPI_INT32_T,
+                        window
+                    );
+                }
+            }
+            unsafe {
+                MPI_Win_fence(0, window);
             }
         }
-
-        if rank == receiver_rank {
-            het_vec.iter_mut().for_each(|x| *x += 1);
-            unsafe {
-                MPI_Put(
-                    het_vec.as_mut_ptr() as *mut c_void,
-                    vector_size as c_int,
-                    RSMPI_INT32_T,
-                    initiator_rank,
-                    0,
-                    vector_size as c_int,
-                    RSMPI_INT32_T,
-                    window
-                );
-            }
-        }
-
-        unsafe { MPI_Win_fence(0, window); }
+        let t_end = mpi::time();
+        test_data.push((t_end - t_start) / 10f64 * 1000f64);
     }
-    let t_end = mpi::time();
+
     if rank == initiator_rank {
-        //println!("--- round {} done, vec: {:?} ---", round, het_vec);
-        println!("Finished {} rounds of ping ping, time: {} ms", round_num, (t_end - t_start) * 1000f64);
+        println!("Finished {} rounds of ping ping, time: {} ms", round_num, test_data[99]);
+        println!("Obtained {} results", test_data.len());
     }
 
     // should release window as it is not automatic

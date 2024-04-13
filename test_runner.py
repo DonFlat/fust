@@ -8,9 +8,9 @@ parser = argparse.ArgumentParser()
 # Add an argument
 parser.add_argument('env', type=str, help="local or das6")
 parser.add_argument('node', type=int, help="How many node?")
-parser.add_argument('app', type=str, help="sor or ping pong")
+parser.add_argument('app', type=str, help="sor_source_data or ping pong")
 parser.add_argument('round', type=int, help='# of iterations for SOR or # of rounds in pingpong')
-parser.add_argument('--l2', type=int, nargs='+', help='matrix size for sor, vector size for pingpong')
+parser.add_argument('--l2', type=int, nargs='+', help='matrix size for sor_source_data, vector size for pingpong')
 
 # Parse the command line arguments
 args = parser.parse_args()
@@ -27,9 +27,9 @@ proc_number = args.node
 header_row = ['Problem Size'] + ['sendrecv', 'rma']
 csv_rows.append(header_row)
 
-# Determine to run sor / pingpong
+# Determine to run sor_source_data / pingpong
 app = []
-if args.app == 'sor':
+if args.app == 'sor_source_data':
     app = ['norm', 'rma']
 elif args.app == 'pp':
     app = ['pin_norm', 'pin_rma']
@@ -45,20 +45,25 @@ for problem_size in problem_sizes:
             command = f"prun -np {proc_number} -1 -script $PRUN_ETC/prun-openmpi `pwd`/./target/release/fust {problem_size} {round_num} {de_app}"
         try:
             # Run the command
-            print(f"Running {command}")
-            output = subprocess.check_output(command, shell=True, universal_newlines=True)
+            print(f"Running {command} for 10 times")
 
-            # Step 1: Split the string using the comma
-            parts = output.split(',')
+            total_time_cost = 0
+            for i in range(0, 10):
+                output = subprocess.check_output(command, shell=True, universal_newlines=True)
 
-            # Step 2: Split the second part using the colon
-            time_part = parts[1].split(':')
+                # Step 1: Split the string using the comma
+                parts = output.split(',')
 
-            # Step 3: Trim whitespace and remove the unit (if necessary)
-            time_value = time_part[1].strip().split(' ')[0]
+                # Step 2: Split the second part using the colon
+                time_part = parts[1].split(':')
 
-            # Append the time to the current row
-            current_row.append(time_value)
+                # Step 3: Trim whitespace and remove the unit (if necessary)
+                time_value = time_part[1].strip().split(' ')[0]
+
+                total_time_cost += time_value
+
+            # Append the averaged time to the current row
+            current_row.append(total_time_cost / 10)
         except subprocess.CalledProcessError as e:
             print(f"Error running command '{command}': {e}")
             current_row.append('Error')  # Use 'Error' or None as appropriate

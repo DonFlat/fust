@@ -15,7 +15,6 @@ fn even_1_odd_0(num: usize) -> usize {
     }
 }
 
-// TODO: how would you tell it is a contiguous memory block, or array of pointers?
 fn get_bounds(n: usize, size: usize, rank: usize) -> (usize, usize) {
     let mut nlarge = n % size; // 1000 % 4 = 0
     let mut nsmall = size - nlarge; // 4 - 0 = 4
@@ -226,4 +225,13 @@ fn print_matrix(matrix: &Vec<Vec<f64>>, n_row: usize, n_col: usize, rank: Rank) 
 // TODO: revisit RMA paper, why small message is quicker?
 // TODO: try ping-pong test
 // TODO: SOR with different numbers of iterations, problem size. don't need to get correct result
+// Some found for experiment with: 8 nodes, 10 iters,
+// matrix size: 50.000, RMA: 8460.146122999999 ms, sendrev too long to get result
+// Even C sor -O3 on 50K took too long to get result, but 30k took 3.166942 s, RMA is 3562.165272 ms
+// matrix size: 40.000, RMA: 5720.041005 ms, sendrev also too long to get result, C sor is same
+//
 // TODO: seq C vs seq Rust
+
+// TODO: library, refactor test, revisit RMA paper, know synchronization
+// TODO: see CPU cycle
+// start from simple case regardless of displacement unit or so.

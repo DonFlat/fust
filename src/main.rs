@@ -20,6 +20,6 @@ fn main() {
         "pin_rma" => ping_pong_rma::ping_pong(problem_or_vec_size, iteration_or_ping_rounds),
         "pin_norm" => ping_pong_norm::ping_pong(problem_or_vec_size, iteration_or_ping_rounds),
         "seq" => sor_seq::sor(problem_or_vec_size, iteration_or_ping_rounds),
-        _ => println!("Invalid argument, run either ping pong | sor, rma | norm")
+        _ => println!("Invalid argument, run either ping pong | sor_source_data, rma | norm")
     }
 }
