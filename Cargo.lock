@@ -12,12 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "autocfg"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
-
-[[package]]
 name = "bindgen"
 version = "0.68.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -51,6 +45,14 @@ name = "bitflags"
 version = "2.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
+
+[[package]]
+name = "build-probe-mpi"
+version = "0.1.3"
+dependencies = [
+ "pkg-config",
+ "shell-words",
+]
 
 [[package]]
 name = "build-probe-mpi"
@@ -217,7 +219,7 @@ name = "fust"
 version = "0.1.0"
 dependencies = [
  "mpi",
- "mpi-sys",
+ "mpi-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "zmq",
 ]
 
@@ -343,15 +345,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 
 [[package]]
-name = "memoffset"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -360,29 +353,23 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 [[package]]
 name = "mpi"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feff046b021e89291acbb509336cd0a9fec3c0ccb54d996401bcb35b8bbf267a"
 dependencies = [
- "build-probe-mpi",
+ "build-probe-mpi 0.1.3",
  "conv",
  "libffi",
- "memoffset",
- "mpi-derive",
- "mpi-sys",
+ "mpi-sys 0.2.1",
  "once_cell",
  "smallvec",
  "thiserror",
 ]
 
 [[package]]
-name = "mpi-derive"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afac052fc749ada64568058c82fcb835bcba21a10453cdc5357c8385f055e657"
+name = "mpi-sys"
+version = "0.2.1"
 dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "bindgen",
+ "build-probe-mpi 0.1.3",
+ "cc",
 ]
 
 [[package]]
@@ -392,7 +379,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cb5d935a63f2c1c7b4f41dcf897869efb1b5ce8e48019b982a43fff2c34b916"
 dependencies = [
  "bindgen",
- "build-probe-mpi",
+ "build-probe-mpi 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "cc",
 ]
 

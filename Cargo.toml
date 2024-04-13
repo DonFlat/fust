@@ -9,4 +9,4 @@ edition = "2021"
 [dependencies]
 mpi-sys = "0.2.1"
 zmq = "0.10.0"
-mpi = { version = "0.7.0", features = ["user-operations", "derive"] }
+mpi = { path = "../rsmpi-main" }
