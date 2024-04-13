@@ -20,3 +20,5 @@ target/
 
 .idea
 .DS_Store
+.txt
+./experiment_data
