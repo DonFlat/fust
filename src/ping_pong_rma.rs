@@ -1,8 +1,6 @@
 use mpi_sys::*;
-use std::os::raw::{c_int, c_void};
-use std::ptr;
-use std::mem::size_of;
 use mpi::topology::Communicator;
+use mpi::window;
 
 pub fn ping_pong(vector_size: usize, round_num: usize) {
 
@@ -22,24 +20,7 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     let receiver_rank = 1;
 
     // Start of the main body
-    let mut het_vec = vec![0; vector_size];
-    // Create a window, not allocate
-    // create is you already have an allocated buffer
-    // allocate is you haven't, MPI allocate it for you
-
-    // Displacement unit: simplify access with a single datatype
-    // typical use: either 1 (all access are in terms of byte offset) or sizeof(type)
-    let mut window = ptr::null_mut();
-    unsafe {
-        MPI_Win_create(
-            het_vec.as_mut_ptr() as *mut c_void,
-            (vector_size * size_of::<c_int>()) as MPI_Aint,
-            size_of::<c_int>() as c_int,
-            RSMPI_INFO_NULL,
-            RSMPI_COMM_WORLD,
-            &mut window
-        );
-    }
+    let mut handle = window::Window::new(vector_size);
 
     // **********************
     // * Start of ping pong *
@@ -50,56 +31,22 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
         let t_start = mpi::time();
         // each ping pong repeats 10 times
         for _ in 0..10 {
-            unsafe {
-                MPI_Win_fence(0, window);
-            }
+            handle.fence();
             if rank == receiver_rank {
-                unsafe {
-                    MPI_Get(
-                        het_vec.as_mut_ptr() as *mut c_void,
-                        message_size as c_int,
-                        RSMPI_INT32_T,
-                        initiator_rank,
-                        0,
-                        message_size as c_int,
-                        RSMPI_INT32_T,
-                        window
-                    );
-                }
+                handle.get_whole_vector(initiator_rank);
             }
-            unsafe {
-                MPI_Win_fence(0, window);
-            }
+            handle.fence();
             if rank == receiver_rank {
-                het_vec.iter_mut().for_each(|x| *x += 1);
-                unsafe {
-                    MPI_Put(
-                        het_vec.as_mut_ptr() as *mut c_void,
-                        message_size as c_int,
-                        RSMPI_INT32_T,
-                        initiator_rank,
-                        0,
-                        message_size as c_int,
-                        RSMPI_INT32_T,
-                        window
-                    );
-                }
+                handle.put_whole_vector(initiator_rank);
             }
-            unsafe {
-                MPI_Win_fence(0, window);
-            }
+            handle.fence();
         }
         let t_end = mpi::time();
         test_data.push((t_end - t_start) / 10f64 * 1000f64);
     }
 
-    if rank == initiator_rank {
-        println!("Finished {} rounds of ping ping, time: {} ms", round_num, test_data[99]);
+    if rank == initiator_rank as i32 {
+        println!("Finished {} rounds of ping ping", round_num);
         println!("Obtained {} results", test_data.len());
-    }
-
-    // should release window as it is not automatic
-    unsafe {
-        MPI_Win_free(&mut window);
     }
 }
