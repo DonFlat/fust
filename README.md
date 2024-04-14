@@ -1,7 +1,7 @@
 #### Compile & Run locally
 ```
 cargo build
-mpirun -n <proc num> ./target/debug/fust {size} {iteration} {program}
+mpirun -n <proc num> ./target/debug/pingpong {size} {iteration} {program}
 ```
 
 #### Run MPI code in DAS6
