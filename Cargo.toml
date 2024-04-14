@@ -1,5 +1,5 @@
 [package]
-name = "fust"
+name = "pingpong"
 authors = ["Don <iamshixudong@gmail.com> <x.shi.2@umail.leidenuniv.nl>"]
 version = "0.1.0"
 edition = "2021"
@@ -8,5 +8,4 @@ edition = "2021"
 
 [dependencies]
 mpi-sys = "0.2.1"
-zmq = "0.10.0"
-mpi = { path = "../rsmpi-main" }
+mpi = { path = "../rsmpi" }

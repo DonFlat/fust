@@ -18,7 +18,10 @@ target/
 /dataSources/
 /dataSources.local.xml
 
+*.png
 .idea
 .DS_Store
-.txt
-./experiment_data
+*.txt
+experiment_data/
+debug_files/
+*.csv
