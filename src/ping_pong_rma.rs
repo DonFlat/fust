@@ -3,8 +3,9 @@ use std::mem::size_of;
 use std::ops::Add;
 use std::ptr;
 use mpi::topology::Communicator;
-use mpi::ffi;
+use mpi::{ffi, window};
 use mpi::ffi::{MPI_Win, MPI_Win_fence, MPI_Win_free, RSMPI_COMM_WORLD, RSMPI_DOUBLE, RSMPI_INFO_NULL};
+use mpi::window::Window;
 use mpi_sys::MPI_Aint;
 
 pub fn ping_pong(vector_size: usize, round_num: usize) {
@@ -17,23 +18,8 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     let receiver_rank = 1usize;
 
     // Start of the main body
-    let mut window_base: Vec<f64> = vec![0f64; 20];
-    let mut window_handle: MPI_Win = ptr::null_mut();
-    if rank == initiator_rank as  i32 {
-        println!("{:p}", window_base.as_mut_ptr());
-    }
-    println!("Before allocate");
-    unsafe {
-        ffi::MPI_Win_allocate(
-            (vector_size * size_of::<c_double>()) as MPI_Aint,
-            size_of::<c_double>() as c_int,
-            RSMPI_INFO_NULL,
-            RSMPI_COMM_WORLD,
-            window_base.as_mut_ptr() as *mut c_void,
-            &mut window_handle
-        );
-    }
-    println!("Here");
+    let mut win = Window::allocate(vector_size);
+
     // **********************
     // * Start of ping pong *
     // **********************
@@ -41,50 +27,18 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     let t_start = mpi::time();
     // each ping pong repeats 10 times
     for _ in 0..10 {
-        unsafe { MPI_Win_fence(0, window_handle); }
+        win.fence();
         if rank == receiver_rank as i32 {
-            unsafe {
-                ffi::MPI_Get(
-                    window_base.as_mut_ptr() as *mut c_void,
-                    vector_size as c_int,
-                    RSMPI_DOUBLE,
-                    initiator_rank as c_int,
-                    0,
-                    vector_size as c_int,
-                    RSMPI_DOUBLE,
-                    window_handle
-                );
-            }
+            win.get_whole_vector(initiator_rank);
         }
-        unsafe { MPI_Win_fence(0, window_handle); }
+        win.fence();
         if rank == receiver_rank as i32 {
-            unsafe {
-                for i in 0..vector_size {
-                    window_base[i] += 1f64;
-                }
-                ffi::MPI_Put(
-                    window_base.as_mut_ptr() as *mut c_void,
-                    vector_size as c_int,
-                    RSMPI_DOUBLE,
-                    initiator_rank as c_int,
-                    0,
-                    vector_size as c_int,
-                    RSMPI_DOUBLE,
-                    window_handle
-                );
-            }
+            win.window_vector.iter_mut().for_each(|x| *x += 1f64);
+            win.put_whole_vector(initiator_rank);
         }
-        unsafe { MPI_Win_fence(0, window_handle); }
+        win.fence();
         if rank == initiator_rank as i32 {
-            if rank == initiator_rank as  i32 {
-                println!("{:p}", window_base.as_mut_ptr());
-            }
-            for i in 0..vector_size {
-                unsafe {
-                    print!("{}, ", window_base[i]);
-                }
-            }
-            println!();
+            println!("{:?}", win.window_vector);
         }
     }
     let t_end = mpi::time();
@@ -93,9 +47,5 @@ pub fn ping_pong(vector_size: usize, round_num: usize) {
     if rank == initiator_rank as i32 {
         println!("Finished {} rounds of ping ping", round_num);
         println!("Obtained {} results", test_data.len());
-    }
-
-    unsafe {
-        MPI_Win_free(&mut window_handle);
     }
 }
