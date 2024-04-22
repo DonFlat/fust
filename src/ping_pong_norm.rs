@@ -1,44 +1,48 @@
-use mpi::topology::Communicator;
+use mpi::Rank;
+use mpi::topology::{Communicator, SimpleCommunicator};
 use mpi::traits::*;
+use crate::test_utils::{append_to_csv, generate_test_size};
 
-pub fn ping_pong(vector_size: usize, round_num: usize) {
+pub fn ping_pong() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
-    let size = world.size();
     let rank = world.rank();
 
-    let initiator_rank = 0;
-    let receiver_rank = 1;
+    let points = generate_test_size(10, 10_000_000, 100);
+    for i in points {
+        run_ping_pong(i, rank, &world);
+    }
+}
 
-    let mut het_vec = vec![0; vector_size];
-
+fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
+    let mut het_vec = vec![0f64; vec_size];
+    let mut latency_data = Vec::new();
     // **********************
     // * Start of ping pong *
     // **********************
-    let t_start = mpi::time();
-    for i in 0..round_num {
-        if rank == initiator_rank {
-            world.process_at_rank(receiver_rank).send(&het_vec);
+    for _ in 0..10 {
+        let t_start = mpi::time();
+        if rank == 0 {
+            world.process_at_rank(1).send(&het_vec);
         }
-        if rank == receiver_rank {
+        if rank == 1 {
             world
-                .process_at_rank(initiator_rank)
+                .process_at_rank(0)
                 .receive_into(&mut het_vec);
-            het_vec.iter_mut().for_each(|x| *x += 1);
-            world.process_at_rank(initiator_rank).send(&het_vec);
+            het_vec.iter_mut().for_each(|x| *x += 1f64);
+            world.process_at_rank(0).send(&het_vec);
         }
-        if rank == initiator_rank {
+        if rank == 0 {
             world
-                .process_at_rank(receiver_rank)
+                .process_at_rank(1)
                 .receive_into(&mut het_vec);
+        }
+        let t_end = mpi::time();
+        if rank == 0 {
+            latency_data.push((t_end - t_start) * 1000f64);
         }
     }
-    let t_end = mpi::time();
-    if rank == initiator_rank {
-        println!(
-            "Finished {} rounds of ping pong, time: {} ms",
-            round_num,
-            (t_end - t_start) * 1000f64
-        );
+    if rank == 0 {
+        append_to_csv("norm_data.csv", vec_size, &latency_data).expect("Failed to write csv");
     }
 }
