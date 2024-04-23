@@ -11,10 +11,10 @@ pub fn ping_pong() {
     // **********************
     // * Start of ping pong *
     // **********************
-    let points = generate_test_size(10, 10_000_000, 100);
-    for i in points {
-        run_ping_pong(i, rank, &world);
-    }
+    // let points = generate_test_size(10, 10_000_000, 100);
+    // for i in points {
+        run_ping_pong(100000000, rank, &world);
+    // }
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
@@ -23,20 +23,20 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // each ping pong repeats 10 times
     for i in 0..10 {
         let t_start = mpi::time();
-        println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, before get", rank, mpi::time() * 100f64, i, vector_size);
+        // println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, before get", rank, mpi::time() * 100f64, i, vector_size);
         win.fence();
         if rank == 1i32 {
             win.get_whole_vector(0);
         }
         win.fence();
-        println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, before put", rank, mpi::time() * 100f64, i, vector_size);
+        // println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, before put", rank, mpi::time() * 100f64, i, vector_size);
         if rank == 1i32 {
             win.window_vector.iter_mut().for_each(|x| *x += 1f64);
             win.put_whole_vector(0);
         }
         win.fence();
         let t_end = mpi::time();
-        println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, a round done", rank, mpi::time() * 100f64, i, vector_size);
+        // println!("Rank: {}_Time: {}_repetition: {}_vecsize: {}, a round done", rank, mpi::time() * 100f64, i, vector_size);
         // Collect data
         if rank == 0i32 {
             latency_data.push((t_end - t_start) * 1000f64);
