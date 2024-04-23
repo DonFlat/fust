@@ -1,15 +1,14 @@
 use mpi::Rank;
 use mpi::topology::{Communicator, SimpleCommunicator};
 use mpi::traits::*;
-use crate::test_utils::{append_to_csv, generate_test_size};
+use crate::test_utils::{append_to_csv};
 
 pub fn ping_pong() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let rank = world.rank();
 
-    let points = generate_test_size(10, 10_000_000, 100);
-    for i in points {
+    for i in vec![10, 100, 1000, 10000] {
         run_ping_pong(i, rank, &world);
     }
 }

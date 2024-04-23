@@ -13,9 +13,10 @@ pub fn ping_pong() {
     let world = universe.world();
     let rank = world.rank();
 
-    for i in vec![10, 100, 1000, 10000] {
-        run_ping_pong(i, rank, &world);
-    }
+    // **********************
+    // * Start of ping pong *
+    // **********************
+    run_ping_pong(1624, rank, &world);
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
@@ -43,15 +44,15 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     );
 
     let mut latency_data = Vec::new();
-    // **********************
-    // * Start Ping-Pong    *
-    // **********************
+    // *******************
+    // * Start Ping-Pong *
+    // *******************
     for i in 0..10 {
         let t_start = mpi::time();
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);
         }
-        if rank == 1 {
+        if rank == 1i32 {
             unsafe {
                 ffi::MPI_Get(
                     window_base as *mut c_void,
@@ -68,7 +69,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);
         }
-        if rank == 1 {
+        if rank == 1i32 {
             window_vector.iter_mut().for_each(|x| *x += 1f64);
             unsafe {
                 ffi::MPI_Put(
@@ -90,8 +91,9 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
         // ************************
         // * Collect latency data *
         // ************************
-        if rank == 0 {
+        if rank == 0i32 {
             latency_data.push((t_end - t_start) * 1000f64);
+            // println!("{:?}", window_vector);
         }
     }
 
@@ -99,7 +101,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
         ffi::MPI_Win_free(&mut window_handle);
     }
 
-    if rank == 0 {
+    if rank == 0i32 {
         append_to_csv("raw_data.csv", vector_size, &latency_data).expect("Failed to write csv");
     }
 }
