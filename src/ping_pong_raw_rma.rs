@@ -17,10 +17,10 @@ pub fn ping_pong() {
     // **********************
     // * Start of ping pong *
     // **********************
-    //let points = generate_test_size(10, 10_000_000, 100);
-    //for i in points {
-        run_ping_pong(10, rank, &world);
-    //}
+    let points = generate_test_size(10, 10_000_000, 100);
+    for i in points {
+        run_ping_pong(i, rank, &world);
+    }
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
@@ -101,6 +101,11 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             // println!("{:?}", window_vector);
         }
     }
+
+    unsafe {
+        ffi::MPI_Win_free(&mut window_handle);
+    }
+
     if rank == 0i32 {
         append_to_csv("raw_data.csv", vector_size, &latency_data).expect("Failed to write csv");
     }

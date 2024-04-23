@@ -11,10 +11,10 @@ pub fn ping_pong() {
     // **********************
     // * Start of ping pong *
     // **********************
-    // let points = generate_test_size(10, 10_000_000, 100);
-    // for i in points {
-        run_ping_pong(100000000, rank, &world);
-    // }
+    let points = generate_test_size(10, 10_000_000, 100);
+    for i in points {
+        run_ping_pong(i, rank, &world);
+    }
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
