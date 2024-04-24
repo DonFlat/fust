@@ -16,6 +16,22 @@ pub fn ping_pong() {
     // **********************
     // * Start of ping pong *
     // **********************
+
+    // How did I found this bug?
+    // I would like to generate a seq of vector_size to test out
+    // Generating with log function, see test_util, the sequence is: [10, 21, 43, 89, 183, 379, 785, 1624, 3360, 6952...]
+    // But came across seg fault with the sequence
+    // Tried to find out which line triggers seg fault, but DAS-6 doesn't have valgrind on node101...
+    // SSHed into node101, used module load valgrind, managed to load
+    // but once logout, run: prun -np 2 -1 -script $PRUN_ETC/prun-openmpi valgrind `pwd`/./target/debug/pingpong raw
+    // It says mpirun unable to run valgrind
+    // Thanks to mpirun reports seg fault was from rank 0, therefore use if rank == 0 to print logs
+    // Found it is the fence after Get triggers the error.
+    // What is even more interesting is just 1624 can lead to seg fault, still haven't found any size else do the same
+    // even for 1625. Or very large number
+    // Now the problem narrowed down to:
+    //   1. Why 1624 makes second fence seg fault?
+    //   2. How to run valgrind on DAS?
     run_ping_pong(1624, rank, &world);
 }
 
