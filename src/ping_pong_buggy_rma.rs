@@ -1,7 +1,7 @@
 use std::ffi::{c_int, c_void};
 use std::mem::{ManuallyDrop, size_of};
 use std::{ptr};
-use mpi::ffi::{MPI_Aint, MPI_Win, RSMPI_COMM_WORLD, RSMPI_INFO_NULL};
+use mpi::ffi::{MPI_Aint, MPI_Win, RSMPI_COMM_WORLD, RSMPI_DOUBLE, RSMPI_INFO_NULL};
 use mpi::{ffi, Rank};
 use mpi::datatype::Equivalence;
 use mpi::raw::AsRaw;
@@ -71,16 +71,16 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
                 ffi::MPI_Get(
                     window_base as *mut c_void,
                     window_vector.len() as c_int,
-                    f64::equivalent_datatype().as_raw(),
+                    RSMPI_DOUBLE,
                     0,
                     0,
                     window_vector.len() as c_int,
-                    f64::equivalent_datatype().as_raw(),
+                    RSMPI_DOUBLE,
                     window_handle
                 );
             }
         }
-        println!("rank: {}, before second fence", rank);
+        println!("rank: {}, before second fence, window_vec len: {}", rank, window_vector.len());
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);
         }
