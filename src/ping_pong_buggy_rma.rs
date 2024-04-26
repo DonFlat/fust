@@ -32,7 +32,7 @@ pub fn ping_pong() {
     // Now the problem narrowed down to:
     //   1. Why 1624 makes second fence seg fault?
     //   2. How to run valgrind on DAS?
-    run_ping_pong(1624, rank);
+    run_ping_pong(1624, rank, &world);
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
