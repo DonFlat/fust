@@ -51,7 +51,6 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             &mut window_base as *mut *mut _ as *mut c_void,
             &mut window_handle
         );
-
     }
     let mut window_vector = ManuallyDrop::new(
         unsafe {
@@ -63,7 +62,6 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // *******************
     // * Start Ping-Pong *
     // *******************
-    for i in 0..10 {
         let t_start = mpi::time();
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);
@@ -111,7 +109,6 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             latency_data.push((t_end - t_start) * 1000f64);
             // println!("{:?}", window_vector);
         }
-    }
 
     unsafe {
         ffi::MPI_Win_free(&mut window_handle);
