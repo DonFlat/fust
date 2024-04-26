@@ -35,7 +35,7 @@ pub fn ping_pong() {
     run_ping_pong(1624, rank);
 }
 
-fn run_ping_pong(vector_size: usize, rank: Rank) {
+fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // *****************
     // * Set up window *
     // *****************
@@ -47,7 +47,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank) {
             (vector_size * size_of::<f64>()) as MPI_Aint,
             size_of::<f64>() as c_int,
             RSMPI_INFO_NULL,
-            RSMPI_COMM_WORLD,
+            world.as_communicator().as_raw(),
             &mut window_base as *mut *mut _ as *mut c_void,
             &mut window_handle
         );
