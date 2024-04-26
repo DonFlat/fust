@@ -1,7 +1,7 @@
 use std::ffi::{c_int, c_void};
 use std::mem::{ManuallyDrop, size_of};
 use std::{ptr};
-use mpi::ffi::{MPI_Aint, MPI_Win, RSMPI_INFO_NULL};
+use mpi::ffi::{MPI_Aint, MPI_Win, RSMPI_COMM_WORLD, RSMPI_INFO_NULL};
 use mpi::{ffi, Rank};
 use mpi::datatype::Equivalence;
 use mpi::raw::AsRaw;
@@ -32,10 +32,10 @@ pub fn ping_pong() {
     // Now the problem narrowed down to:
     //   1. Why 1624 makes second fence seg fault?
     //   2. How to run valgrind on DAS?
-    run_ping_pong(1624, rank, &world);
+    run_ping_pong(1624, rank);
 }
 
-fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
+fn run_ping_pong(vector_size: usize, rank: Rank) {
     // *****************
     // * Set up window *
     // *****************
@@ -47,7 +47,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             (vector_size * size_of::<f64>()) as MPI_Aint,
             size_of::<f64>() as c_int,
             RSMPI_INFO_NULL,
-            world.as_communicator().as_raw(),
+            RSMPI_COMM_WORLD,
             &mut window_base as *mut *mut _ as *mut c_void,
             &mut window_handle
         );
@@ -80,9 +80,11 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
                 );
             }
         }
+        println!("rank: {}, before second fence", rank);
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);
         }
+        println!("rank: {}, after second fence", rank);
         if rank == 1i32 {
             window_vector.iter_mut().for_each(|x| *x += 1f64);
             unsafe {
