@@ -1,15 +1,15 @@
 use mpi::Rank;
 use mpi::topology::{Communicator, SimpleCommunicator};
 use mpi::traits::*;
-use crate::test_utils::{append_to_csv};
+use crate::test_utils::{append_to_csv, powers_of_two};
 
-pub fn ping_pong() {
+pub fn ping_pong(size: u32) {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let rank = world.rank();
 
-    for i in vec![10, 100, 1000, 10000] {
-        run_ping_pong(i, rank, &world);
+    for n in powers_of_two(size) {
+        run_ping_pong(n as usize, rank, &world);
     }
 }
 
@@ -19,7 +19,7 @@ fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // **********************
     // * Start of ping pong *
     // **********************
-    for _ in 0..10 {
+    for _ in 0..11 {
         let t_start = mpi::time();
         if rank == 0 {
             world.process_at_rank(1).send(&het_vec);

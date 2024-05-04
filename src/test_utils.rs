@@ -21,6 +21,10 @@ pub fn generate_test_size(min: usize, max: usize, num_points: usize) -> Vec<usiz
     return sizes;
 }
 
+pub fn powers_of_two(n: u32) -> Vec<u32> {
+    (0..n).map(|i| 2_u32.pow(i)).collect()
+}
+
 pub fn append_to_csv(file_path: &str, vector_size: usize, repetitions: &Vec<f64>) -> Result<(), Box<dyn Error>> {
     let file = OpenOptions::new()
         .write(true)
