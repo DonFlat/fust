@@ -65,9 +65,9 @@ void ping_pong(char *argv[], int window_size, int rank) {
         }
         MPI_Win_fence(0, window_handle);
         if (rank == 1) {
-            for (int i = 0; i < window_size; i++) {
-                window_base[i]++;
-            }
+//            for (int i = 0; i < window_size; i++) {
+//                window_base[i]++;
+//            }
             MPI_Put(window_base, window_size, MPI_DOUBLE, 0, 0, window_size, MPI_DOUBLE, window_handle);
         }
         MPI_Win_fence(0, window_handle);

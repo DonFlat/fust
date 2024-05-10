@@ -30,7 +30,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
         }
         win.fence();
         if rank == 1i32 {
-            win.window_vector.iter_mut().for_each(|x| *x += 1f64);
+            // win.window_vector.iter_mut().for_each(|x| *x += 1f64);
             win.put_whole_vector(0);
         }
         win.fence();

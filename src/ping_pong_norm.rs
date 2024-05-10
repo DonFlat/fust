@@ -28,7 +28,7 @@ fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
             world
                 .process_at_rank(0)
                 .receive_into(&mut het_vec);
-            het_vec.iter_mut().for_each(|x| *x += 1f64);
+            // het_vec.iter_mut().for_each(|x| *x += 1f64);
             world.process_at_rank(0).send(&het_vec);
         }
         if rank == 0 {

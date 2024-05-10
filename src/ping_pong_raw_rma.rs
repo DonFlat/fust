@@ -69,7 +69,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             ffi::MPI_Win_fence(0, window_handle);
         }
         if rank == 1 {
-            window_vector.iter_mut().for_each(|x| *x += 1f64);
+            // window_vector.iter_mut().for_each(|x| *x += 1f64);
             unsafe {
                 ffi::MPI_Put(
                     window_base as *mut c_void,
