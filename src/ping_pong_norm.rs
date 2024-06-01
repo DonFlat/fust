@@ -14,6 +14,9 @@ pub fn ping_pong(size: u32) {
 }
 
 fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
+    if rank == 0 {
+        println!("Rank 0: run ping pong with size: {}", vec_size);
+    }
     let mut het_vec = vec![0f64; vec_size];
     let mut latency_data = Vec::new();
     // **********************
@@ -42,6 +45,6 @@ fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
         }
     }
     if rank == 0 {
-        append_to_csv("norm_data.csv", vec_size, &latency_data).expect("Failed to write csv");
+        append_to_csv("sendrecv_data.csv", vec_size, &latency_data).expect("Failed to write csv");
     }
 }

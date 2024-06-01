@@ -19,6 +19,9 @@ pub fn ping_pong(size: u32) {
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
+    if rank == 0 {
+        println!("Rank 0: run ping pong with size: {}", vector_size);
+    }
     // *****************
     // * Set up window *
     // *****************

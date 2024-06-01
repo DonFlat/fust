@@ -44,9 +44,8 @@ double* powers_of_two(double size) {
 
 void ping_pong(char *argv[], int window_size, int rank) {
     if (rank == 0) {
-        printf("window size: %d\n", window_size);
+        printf("window/vector size: %d\n", window_size);
     }
-
     //  ---- Start RMA
     // Initialize Window
     double *window_base;
