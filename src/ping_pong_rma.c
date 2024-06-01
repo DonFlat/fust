@@ -43,9 +43,6 @@ double* powers_of_two(double size) {
 }
 
 void ping_pong(char *argv[], int window_size, int rank) {
-    if (rank == 0) {
-        printf("window/vector size: %d\n", window_size);
-    }
     //  ---- Start RMA
     // Initialize Window
     double *window_base;
@@ -71,7 +68,7 @@ void ping_pong(char *argv[], int window_size, int rank) {
         }
         MPI_Win_fence(0, window_handle);
         double end_time = MPI_Wtime();
-        latencies[i] = (end_time - start_time) * 1000;
+        latencies[i] = (end_time - start_time) * 1000000;
     }
     // Print array for debugging
 //    if (rank == 0) {
@@ -88,6 +85,9 @@ void ping_pong(char *argv[], int window_size, int rank) {
 
     //  ---- Clean up
     MPI_Win_free(&window_handle);
+    if (rank == 0) {
+        printf("Done with window/vector size: %d\n", window_size);
+    }
     return;
 }
 

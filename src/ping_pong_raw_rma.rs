@@ -19,9 +19,6 @@ pub fn ping_pong(size: u32) {
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
-    if rank == 0 {
-        println!("Rank 0: run ping pong with size: {}", vector_size);
-    }
     // *****************
     // * Set up window *
     // *****************
@@ -94,7 +91,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
         // * Collect latency data *
         // ************************
         if rank == 0 {
-            latency_data.push((t_end - t_start) * 1000f64);
+            latency_data.push((t_end - t_start) * 1000000f64);
         }
     }
 
@@ -104,5 +101,8 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
 
     if rank == 0 {
         append_to_csv("raw_data.csv", vector_size, &latency_data).expect("Failed to write csv");
+    }
+    if rank == 0 {
+        println!("Done with: Rank 0: run ping pong with size: {}", vector_size);
     }
 }
