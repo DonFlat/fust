@@ -15,7 +15,7 @@ void write_to_csv(double window_size, double* latency) {
     fprintf(fpt, "%d", (int)window_size);
 
     // Write the elements of the latency array as the rest of the columns
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 12; i++) {
         fprintf(fpt, ",%f", latency[i]);
     }
 
@@ -57,7 +57,7 @@ void ping_pong(char *argv[], int window_size, int rank) {
     // latency data
     double latencies[11];
     // start
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 12; i++) {
         double start_time = MPI_Wtime();
         MPI_Win_fence(0, window_handle);
         if (rank == 1) {

@@ -46,7 +46,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // **********************
     // * Start Ping-Pong    *
     // **********************
-    for i in 0..11 {
+    for i in 0..12 {
         let t_start = mpi::time();
         unsafe {
             ffi::MPI_Win_fence(0, window_handle);

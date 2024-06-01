@@ -6,7 +6,7 @@ use mpi::{ffi, Rank};
 use mpi::datatype::Equivalence;
 use mpi::raw::AsRaw;
 use mpi::topology::{AsCommunicator, Communicator, SimpleCommunicator};
-use crate::test_utils::{append_to_csv};
+use crate::test_utils::{append_to_csv, powers_of_two};
 
 pub fn ping_pong() {
     let universe = mpi::initialize().unwrap();
@@ -32,7 +32,9 @@ pub fn ping_pong() {
     // Now the problem narrowed down to:
     //   1. Why 1624 makes second fence seg fault?
     //   2. How to run valgrind on DAS?
-    run_ping_pong(1624, rank, &world);
+    for n in powers_of_two(32) {
+        run_ping_pong(n as usize, rank, &world);
+    }
 }
 
 fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {

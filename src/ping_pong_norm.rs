@@ -19,7 +19,7 @@ fn run_ping_pong(vec_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // **********************
     // * Start of ping pong *
     // **********************
-    for _ in 0..11 {
+    for _ in 0..12 {
         let t_start = mpi::time();
         if rank == 0 {
             world.process_at_rank(1).send(&het_vec);

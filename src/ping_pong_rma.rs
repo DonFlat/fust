@@ -22,7 +22,7 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
     // **********************
     // * Start of ping pong *
     // **********************
-    for i in 0..11 {
+    for i in 0..12 {
         let t_start = mpi::time();
         win.fence();
         if rank == 1i32 {
