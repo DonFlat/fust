@@ -51,7 +51,7 @@ void ping_pong(char *argv[], int window_size, int rank) {
     MPI_Win_allocate(window_size * sizeof(double), sizeof(double), MPI_INFO_NULL,
                      MPI_COMM_WORLD, &window_base, &window_handle);
     // latency data
-    double latencies[11];
+    double latencies[12];
     // start
     for (int i = 0; i < 12; i++) {
         double start_time = MPI_Wtime();
