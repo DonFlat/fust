@@ -6,11 +6,9 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # Add an argument
-parser.add_argument('env', type=str, help="local or das6")
-parser.add_argument('node', type=int, help="How many node?")
-parser.add_argument('app', type=str, help="sor_source_data or ping pong")
-parser.add_argument('round', type=int, help='# of iterations for SOR or # of rounds in pingpong')
-parser.add_argument('--l2', type=int, nargs='+', help='matrix size for sor_source_data, vector size for pingpong')
+parser.add_argument('-e', type=str, help="local or das6")
+parser.add_argument('-n', type=int, help="How many node?")
+parser.add_argument('-s', type=int, help='matrix size vector size for pingpong')
 
 # Parse the command line arguments
 args = parser.parse_args()

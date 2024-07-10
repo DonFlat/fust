@@ -14,7 +14,6 @@ fn main() {
     let mpi_type: &str = &args[1];
     let size: u32 = args[2].parse().expect("Failed to parse args[2] as u32");
     match mpi_type {
-        "rma" => ping_pong_rma::ping_pong(size),
         "norm" => ping_pong_norm::ping_pong(size),
         "raw" => ping_pong_raw_rma::ping_pong(size),
         "buggy" => ping_pong_buggy_rma::ping_pong(),

@@ -34,7 +34,6 @@ fn run_ping_pong(vector_size: usize, rank: Rank, world: &SimpleCommunicator) {
             &mut window_base as *mut *mut _ as *mut c_void,
             &mut window_handle
         );
-
     }
     let mut window_vector = ManuallyDrop::new(
         unsafe {
