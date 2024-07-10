@@ -44,7 +44,8 @@ double* powers_of_two(double size) {
 
 void ping_pong(int array_size, int rank) {
     // Initialize array
-    double data[array_size];
+    // double data[array_size];
+    double *data = malloc(array_size * sizeof(double));
     for (int i = 0; i < array_size; i++) {
         data[i] = 0;
     }
@@ -57,19 +58,19 @@ void ping_pong(int array_size, int rank) {
         if (rank == 0) {
             MPI_Send(data, array_size, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
 
-//            printf("\n");
-//            for (int i = 0; i < array_size; i++) {
-//                printf(" %lf ", data[i]);
-//            }
-//            printf("\n");
+        //    printf("\n");
+        //    for (int i = 0; i < array_size; i++) {
+        //        printf(" %lf ", data[i]);
+        //    }
+        //    printf("\n");
 
             MPI_Recv(data, array_size, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         } else if (rank == 1) {
             MPI_Recv(data, array_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            for (int i = 0; i < array_size; i++) {
-                data[i]++;
-            }
+            // for (int i = 0; i < array_size; i++) {
+            //     data[i]++;
+            // }
 
             MPI_Send(data, array_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
         }
@@ -85,6 +86,7 @@ void ping_pong(int array_size, int rank) {
     if (rank == 0) {
         printf("Done with vector size: %d\n", array_size);
     }
+    free(data);
     return;
 }
 
